@@ -1,3 +1,4 @@
+#pragma once
 #include "src/selection/selection.h"
 #include "src/selection/greedy.h"
 #include "src/selection/costbenefit.h"

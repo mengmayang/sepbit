@@ -1,5 +1,6 @@
-#ifndef LOGSTORE_SCHEDULER_H
-#define LOGSTORE_SCHEDULER_H
+#pragma once
+#ifndef LOGSTORE_SCHEDULER1_H
+#define LOGSTORE_SCHEDULER1_H
 
 #include <thread>
 #include <zconf.h>
@@ -9,11 +10,12 @@
 #include "src/logstore/manager.h"
 #include "src/selection/factory.h"
 #include "src/logstore/config.h"
+#include "src/logstore/scheduler/scheduler.h"
 
-class Scheduler {
+class Scheduler1: public Scheduler {
 
 public:
-    Scheduler(Manager *manager);
+    Scheduler1(Manager *manager);
     void Shutdown() { mShutdown = true; }
 
 private:
@@ -25,4 +27,5 @@ private:
     std::thread mWorker;
     bool mShutdown = false;
 };
-#endif //LOGSTORE_SCHEDULER_H
+#endif //LOGSTORE_SCHEDULER1_H
+

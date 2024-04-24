@@ -1,13 +1,14 @@
-#include "src/logstore/scheduler.h"
+//#include "src/logstore/scheduler/scheduler1.h"
+#include "scheduler1.h"
 
-Scheduler::Scheduler(Manager *manager)
+Scheduler1::Scheduler1(Manager *manager)
 {
   mSelection = std::unique_ptr<Selection>(SelectionFactory::GetInstance(Config::GetInstance().selection));
-  mWorker = std::thread(&Scheduler::scheduling, this, manager);
+  mWorker = std::thread(&Scheduler1::scheduling, this, manager);
   mWorker.detach();
 }
 
-void Scheduler::scheduling(Manager *manager) {
+void Scheduler1::scheduling(Manager *manager) {
   using namespace std::chrono_literals;
   struct timeval current_time;
   while (true) {
@@ -44,7 +45,7 @@ void Scheduler::scheduling(Manager *manager) {
   }
 }
 
-int Scheduler::select(Manager *manager) {
+int Scheduler1::select(Manager *manager) {
   // prepare the segments_
   std::vector<Segment> segments;
   manager->GetSegments(segments);
@@ -54,7 +55,7 @@ int Scheduler::select(Manager *manager) {
   return res[0].second;
 }
 
-void Scheduler::collect(Manager *manager, Segment &segment) {
+void Scheduler1::collect(Manager *manager, Segment &segment) {
   uint64_t nRewriteBlocks = 0;
   manager->CollectSegment(segment.GetSegmentId());
   for (int i = 0; i < 131072; ++i) {
@@ -68,3 +69,4 @@ void Scheduler::collect(Manager *manager, Segment &segment) {
   }
   manager->RemoveSegment(segment.GetSegmentId(), segment.GetTotalInvalidBlocks() + nRewriteBlocks);
 }
+

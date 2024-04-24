@@ -1,3 +1,4 @@
+#pragma once
 #ifndef LOGSTORE_SELECTION_H
 #define LOGSTORE_SELECTION_H
 

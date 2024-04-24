@@ -33,10 +33,13 @@ public:
 
     void OpenNewSegment(int id);
     void RemoveSegment(int id, uint64_t nRewriteBlocks);
+    void RemoveSegment(uint64_t id);
     void CollectSegment(int id);
 
     void GetSegments(std::vector<Segment> &segs);
     Segment ReadSegment(int id);
+    void ReadSegment(int segid, uint64_t block_addr, int block_index);
+    std::shared_ptr<Segment>& GetSegmentById(uint64_t id);
 
 private:
     std::shared_ptr<Segment> findSegment(off64_t addr);

@@ -4,7 +4,8 @@
 
 #include <memory>
 #include "src/logstore/manager.h"
-#include "src/logstore/scheduler.h"
+//#include "src/logstore/scheduler/scheduler.h"
+#include "src/logstore/scheduler/factory.h"
 #include "src/buse/buseOperations.h"
 
 class LogStore : public buse::buseOperations {

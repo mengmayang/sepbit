@@ -17,6 +17,8 @@ public:
   int         maxNumOpenSegments = 6;
   uint64_t    numValidBlocks = 0;
   double      gpt = 0.15;
+  // scheduler:raw|new
+  std::string scheduler = "raw";
 
   // For zenfs and zoned storage backend
   std::string zbdName = "sdd";
@@ -31,3 +33,4 @@ public:
 };
 
 #endif
+

@@ -101,7 +101,8 @@ LogStore::LogStore(uint64_t size) :
   buse::buseOperations(size)
 {
   mManager = std::make_unique<Manager>(6);
-  mScheduler = std::make_unique<Scheduler>(mManager.get());
+  //mScheduler = std::make_unique<Scheduler>(mManager.get());
+  mScheduler = std::unique_ptr<Scheduler>(SchedulerFactory::GetInstance(Config::GetInstance().scheduler, mManager.get()));
 }
 
 void LogStore::Shutdown() {

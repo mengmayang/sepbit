@@ -142,6 +142,17 @@ Segment Manager::ReadSegment(int id) {
   return segment;
 }
 
+void Manager::ReadSegment(int segid, uint64_t block_addr, int block_index) {
+  Segment segment = Segment(mSegments[segid]);
+  off64_t phyAddr = segment.GetPhyAddr(block_index);
+  char* data = segment.GetBlockData(block_index);
+  mStorageAdapter->Read(data, segid, phyAddr % 131072);
+}
+
+std::shared_ptr<Segment>& Manager::GetSegmentById(uint64_t id) {
+  return mSegments[id];
+}
+
 void Manager::OpenNewSegment(int id) {
   std::lock_guard<std::mutex> lck(mSegmentMutex);
 
@@ -153,6 +164,18 @@ void Manager::OpenNewSegment(int id) {
 }
 
 void Manager::RemoveSegment(int id, uint64_t nInvalidBlocks) {
+  {
+    std::lock_guard<std::mutex> lck(mSegmentMutex);
+    mTotalInvalidBlocks -= mSegments[id]->GetTotalInvalidBlocks();
+    mTotalBlocks -= 131072;
+    mSegments.erase(id);
+    mTotalRelease += 131072;
+  }
+
+  mStorageAdapter->DestroySegment(id);
+  PrintRealStats();
+}
+void Manager::RemoveSegment(uint64_t id) {
   {
     std::lock_guard<std::mutex> lck(mSegmentMutex);
     mTotalInvalidBlocks -= mSegments[id]->GetTotalInvalidBlocks();
