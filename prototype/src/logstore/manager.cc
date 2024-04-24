@@ -37,7 +37,9 @@ Manager::~Manager() {
  */
 void Manager::Append(const void *buf, off64_t addr) {
   using namespace std::chrono_literals;
-  if (GetGp() > 0.15) {
+  double gpt = Config::GetInstance().gpt;
+  // if (GetGp() > 0.15) {
+  if (GetGp() > gpt) {
     std::this_thread::sleep_for(0.0001s);
   }
 

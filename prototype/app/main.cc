@@ -12,8 +12,13 @@
 using namespace buse;
 
 int main(int argc, char *argv[]) {
+  if (argc != 5) {
+    std::cout << "Usage: ./app <placement> <traceDir> <traceFileName> <gpt>" << std::endl;
+    return 1;
+  }
 //  Config::getInstance().selection = std::string(argv[1]);
   Config::GetInstance().placement = std::string(argv[1]);
+  Config::GetInstance().gpt = std::stod(argv[4]);
 
   int opt;
   buseOperations *bop = NULL; // Initialize to something 

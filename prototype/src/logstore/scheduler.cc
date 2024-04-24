@@ -16,8 +16,9 @@ void Scheduler::scheduling(Manager *manager) {
       break;
     }
 
-
-    while (manager->GetGp() >= 0.15) {
+    double gpt = Config::GetInstance().gpt;
+    // while (manager->GetGp() >= 0.15) {
+    while (manager->GetGp() >= gpt) {
       printf("GP: %.2f\n", manager->GetGp());
       // select a segment
       int segmentId = select(manager);

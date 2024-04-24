@@ -16,6 +16,7 @@ public:
   std::string placement = "SepBIT";
   int         maxNumOpenSegments = 6;
   uint64_t    numValidBlocks = 0;
+  double      gpt = 0.15;
 
   // For zenfs and zoned storage backend
   std::string zbdName = "sdd";
