@@ -17,6 +17,16 @@ public:
     output_file_ = output_prefix + '/' + "analyze_cluster.output";
     analyzerIO(tracesFile);
   }
+  void analyze_volume(const std::string& tracesFile, const std::string& output_prefix) {
+    std::size_t lastSlashPos = tracesFile.rfind('/');
+    std::string fileName = tracesFile.substr(lastSlashPos + 1);
+    std::size_t commaPos = fileName.find('.');
+    if (commaPos != std::string::npos) {
+      std::string currentId = fileName.substr(0, commaPos);
+      output_file_ = output_prefix + '/' + currentId +".output";
+      analyzerIO(tracesFile);
+    }
+  }
   void split_volumes(const std::string& tracesFile, const std::string& output_prefix, const std::string& selectedFile) {
     // 读取选中的卷id
     std::ifstream selectedStream(selectedFile);
@@ -82,8 +92,8 @@ private:
       if (++cnt % 1000000 == 0) {
         Clock::time_point te = Clock::now();
         double duration2 = (std::chrono::duration_cast <std::chrono::milliseconds> (te - ts)).count() / 1024.0;
-        fprintf(stderr, "Scan on %s: %lu requests, %lf seconds, read %.6lf GiB, speed %.6lf MiB/s\n", 
-            event, cnt, duration2, (double)totReadBytes_ / 1024.0 / 1024.0 / 1024.0, 
+        fprintf(stderr, "Scan on %s: %lu requests, %lf seconds, read %.6lf GiB, speed %.6lf MiB/s\n",
+            event, cnt, duration2, (double)totReadBytes_ / 1024.0 / 1024.0 / 1024.0,
             (double)totReadBytes_ / 1024.0 / 1024.0 / duration2);
       }
     }
@@ -102,9 +112,10 @@ private:
     std::string line;
     myTimer(true, "analyzerIO");
     unsigned int currentTimeSec = 0; // 当前时间（秒）
-    std::map<std::string, IOStatistics> statsByType;
+    std::map<char, IOStatistics> statsByType;
     while(std::getline(tracesStream, line)) {
       IOOperation ioOp(line);
+      totReadBytes_ += line.length() + 1;
       // 计算当前时间秒数（这里简化为只基于最后一条记录的时间）
       unsigned int newTimeSec = ioOp.timestamp_in_ms / 1000;
       if (newTimeSec != currentTimeSec) {
@@ -115,14 +126,14 @@ private:
       // 更新统计信息
       ++statsByType[ioOp.type].iops;
       statsByType[ioOp.type].totalSize += ioOp.size;
-      if (ioOp.type == "R") { // 处理读操作
-        ++statsByType["R"].readIops;
-        statsByType["R"].totalReadSize += ioOp.size;
-      } else if (ioOp.type == "W") { // 处理写操作
-        ++statsByType["W"].writeIops;
-        statsByType["W"].totalWriteSize += ioOp.size;
+      if (ioOp.type == 'R') { // 处理读操作
+        ++statsByType['R'].readIops;
+        statsByType['R'].totalReadSize += ioOp.size;
+      } else if (ioOp.type == 'W') { // 处理写操作
+        ++statsByType['W'].writeIops;
+        statsByType['W'].totalWriteSize += ioOp.size;
       }
-      myTimer(true, "analyzerIO");
+      myTimer(false, "analyzerIO");
     }
     // 处理最后一段时间段的数据
     if (!statsByType.empty()) {
@@ -130,15 +141,15 @@ private:
     }
     outputFile.close();
   }
-  void reportIOPSAndBandwidth(unsigned int timeSec, const std::map<std::string, IOStatistics>& statsByType, std::ofstream& outputFile) {
+  void reportIOPSAndBandwidth(unsigned int timeSec, const std::map<char, IOStatistics>& statsByType, std::ofstream& outputFile) {
     for (const auto& entry : statsByType) {
         const auto& type = entry.first;
         const auto& ioStat = entry.second;
         double bwMBps = static_cast<double>(ioStat.totalSize) / (timeSec * 1e6);
         double readBwMBps = 0.0, writeBwMBps = 0.0;
-        if (type == "R") {
+        if (type == 'R') {
             readBwMBps = static_cast<double>(ioStat.totalReadSize) / (timeSec * 1e6);
-        } else if (type == "W") {
+        } else if (type == 'W') {
             writeBwMBps = static_cast<double>(ioStat.totalWriteSize) / (timeSec * 1e6);
         }
 
@@ -157,12 +168,21 @@ private:
 
 int main(int argc, char *argv[]) {
     Analyzer analyzer;
-    if (argc == 3) {
-      //analyze_cluster("/home/yyqiao/papaer/alibaba_block_traces_2020/io_traces.csv", "/sds_data/ali_trace/");
+    int arg3AsInt;
+    try {
+      arg3AsInt = std::stoi(argv[3]);
+    } catch (const std::invalid_argument& ia) {
+      //split_volumes("/home/yyqiao/papaer/alibaba_block_traces_2020/io_traces.csv", "/sds_data/ali_trace/", "/etc/ali_selected.txt");
+      //analyzer.split_volumes(argv[1], argv[2]);
+    }
+    if (arg3AsInt == 1) {
+      //analyze_volume("/sds_data/ali_trace/volume_trace/0.csv", "/sds_data/ali_trace/iops_bw", 1);
+      analyzer.analyze_volume(argv[1], argv[2]);
+    } else if (arg3AsInt == 2) {
+      //analyze_cluster("/home/yyqiao/papaer/alibaba_block_traces_2020/io_traces.csv", "/sds_data/ali_trace/iops_bw", 2);
       analyzer.analyze_cluster(argv[1], argv[2]);
     } else {
-      //split_volumes("/home/yyqiao/papaer/alibaba_block_traces_2020/io_traces.csv", "/sds_data/ali_trace/", "/etc/ali_selected.txt");
-      analyzer.split_volumes(argv[1], argv[2], argv[3]);
+      exit(1);
     }
     return 0;
 }
