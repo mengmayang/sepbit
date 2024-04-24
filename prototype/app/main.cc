@@ -25,8 +25,8 @@ int main(int argc, char *argv[]) {
     buffer[i] = 0;
   }
   
-  char input[100];
-  memset(input, 0, 100);
+  char input[300];
+  memset(input, 0, 300);
   sprintf(input, "%s/%s.csv", argv[2], argv[3]);
   FILE *trace = fopen(input, "r");
   char line[100];
