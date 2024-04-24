@@ -52,6 +52,7 @@ private:
     uint64_t mTotalInvalidBlocks;
     uint64_t mTotalUserWrites;
     uint64_t mTotalGcWrites;
+    uint64_t mTotalRelease;
 
     std::mutex mGlobalMutex;
     std::mutex mStopTheWorldMutex;

@@ -156,6 +156,7 @@ void Manager::RemoveSegment(int id, uint64_t nInvalidBlocks) {
     mTotalInvalidBlocks -= mSegments[id]->GetTotalInvalidBlocks();
     mTotalBlocks -= 131072;
     mSegments.erase(id);
+    mTotalRelease += 131072;
   }
 
   mStorageAdapter->DestroySegment(id);
@@ -203,7 +204,9 @@ uint64_t Manager::PrintRealStats() {
     nBlocks += pr.second->GetTotalBlocks();
   }
   double WA = 1 + (double)mTotalGcWrites/(double)mTotalUserWrites;
-  std::cout << "Stat: nInvalidBlocks:" << nInvalidBlocks << ", ValidBlocks:" << nBlocks - nInvalidBlocks
+  std::cout << "Stat: mTotalBlocks:" << mTotalBlocks
+            << ", mTotalRelease:" << mTotalRelease
+            << ", nInvalidBlocks:" << nInvalidBlocks << ", ValidBlocks:" << nBlocks - nInvalidBlocks
             << ", Invalid percent:" << nInvalidBlocks * 100 / nBlocks << "%" 
             << ", WA:" << WA << std::endl;
   std::cout << "UserWrite: " << mTotalUserWrites * 4096 / 1024 / 1024 / 1024.0 << 
