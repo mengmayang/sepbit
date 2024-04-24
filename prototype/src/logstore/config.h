@@ -11,7 +11,8 @@ public:
   }
   std::string selection = "CostBenefit";
   std::string indexMap = "Array";
-  std::string storageAdapter = "ZenFS";
+  // std::string storageAdapter = "ZenFS";
+  std::string storageAdapter = "Local";
   std::string placement = "SepBIT";
   int         maxNumOpenSegments = 6;
   uint64_t    numValidBlocks = 0;
