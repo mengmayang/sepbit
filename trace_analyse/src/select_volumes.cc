@@ -1,18 +1,22 @@
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <map>
-#include<sys/time.h>
-#include<chrono>
+#include <sys/time.h>
+#include <chrono>
 #include <algorithm>
+#include "common_struct.h"
 
 typedef std::chrono::high_resolution_clock Clock;
 typedef std::chrono::milliseconds milliseconds;
 
 class Analyzer {
-
 public:
-  void analyze_cluster(const std::string& tracesFile, const std::string& output_prefix) {}
+  void analyze_cluster(const std::string& tracesFile, const std::string& output_prefix) {
+    output_file_ = output_prefix + '/' + "analyze_cluster.output";
+    analyzerIO(tracesFile);
+  }
   void split_volumes(const std::string& tracesFile, const std::string& output_prefix, const std::string& selectedFile) {
     // 读取选中的卷id
     std::ifstream selectedStream(selectedFile);
@@ -60,6 +64,14 @@ public:
     }
   }
 private:
+ struct IOStatistics {
+    size_t iops = 0;
+    unsigned long long totalSize = 0;
+    size_t readIops = 0;
+    size_t writeIops = 0;
+    unsigned long long totalReadSize = 0;
+    unsigned long long totalWriteSize = 0;
+  };
   void myTimer(bool start, const char* event = "") {
     static Clock::time_point ts;
     static uint64_t cnt = 0;
@@ -76,7 +88,71 @@ private:
       }
     }
   }
+  void analyzerIO(const std::string& tracesFile) {
+    // 计算IOPS，BandWidth
+    // 读取io_traces.csv并写入对应卷id的文件
+    std::ifstream tracesStream(tracesFile);
+
+    // 打开结果文件
+    std::ofstream outputFile(output_file_);
+    if (!outputFile.is_open()) {
+      throw std::runtime_error("Failed to open output file: " + output_file_);
+    }
+
+    std::string line;
+    myTimer(true, "analyzerIO");
+    unsigned int currentTimeSec = 0; // 当前时间（秒）
+    std::map<std::string, IOStatistics> statsByType;
+    while(std::getline(tracesStream, line)) {
+      IOOperation ioOp(line);
+      // 计算当前时间秒数（这里简化为只基于最后一条记录的时间）
+      unsigned int newTimeSec = ioOp.timestamp_in_ms / 1000;
+      if (newTimeSec != currentTimeSec) {
+        reportIOPSAndBandwidth(currentTimeSec, statsByType, outputFile);
+        currentTimeSec = newTimeSec;
+        statsByType.clear();
+      }
+      // 更新统计信息
+      ++statsByType[ioOp.type].iops;
+      statsByType[ioOp.type].totalSize += ioOp.size;
+      if (ioOp.type == "R") { // 处理读操作
+        ++statsByType["R"].readIops;
+        statsByType["R"].totalReadSize += ioOp.size;
+      } else if (ioOp.type == "W") { // 处理写操作
+        ++statsByType["W"].writeIops;
+        statsByType["W"].totalWriteSize += ioOp.size;
+      }
+      myTimer(true, "analyzerIO");
+    }
+    // 处理最后一段时间段的数据
+    if (!statsByType.empty()) {
+      reportIOPSAndBandwidth(currentTimeSec, statsByType, outputFile);
+    }
+    outputFile.close();
+  }
+  void reportIOPSAndBandwidth(unsigned int timeSec, const std::map<std::string, IOStatistics>& statsByType, std::ofstream& outputFile) {
+    for (const auto& entry : statsByType) {
+        const auto& type = entry.first;
+        const auto& ioStat = entry.second;
+        double bwMBps = static_cast<double>(ioStat.totalSize) / (timeSec * 1e6);
+        double readBwMBps = 0.0, writeBwMBps = 0.0;
+        if (type == "R") {
+            readBwMBps = static_cast<double>(ioStat.totalReadSize) / (timeSec * 1e6);
+        } else if (type == "W") {
+            writeBwMBps = static_cast<double>(ioStat.totalWriteSize) / (timeSec * 1e6);
+        }
+
+        outputFile << "At time " << timeSec << " seconds, Type: " << type
+                    << ", Total IOPS: " << ioStat.iops
+                    << ", Read IOPS: " << ioStat.readIops
+                    << ", Write IOPS: " << ioStat.writeIops
+                    << ", Total Bandwidth: " << bwMBps << " MB/s"
+                    << ", Read Bandwidth: " << readBwMBps << " MB/s"
+                    << ", Write Bandwidth: " << writeBwMBps << " MB/s" << std::endl;
+    }
+  }
   uint64_t totReadBytes_ = 0;
+  std::string output_file_;
 };
 
 int main(int argc, char *argv[]) {
