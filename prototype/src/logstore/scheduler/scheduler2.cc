@@ -29,9 +29,9 @@ void Scheduler2::scheduling(Manager *manager) {
             current_time.tv_sec, current_time.tv_usec);
       }
       // TODO
+      if (segmentIds.empty()) continue;
       // 将Cost-BenefitGreedy选出的segment放到segments map中
       std::map<uint64_t, std::shared_ptr<Segment>> segments;
-      assert(segments.size() > 0);
       auto first_segment = manager->GetSegmentById(segmentIds[0]);
       auto first_segment_Id = first_segment->GetSegmentId();
       segments[first_segment_Id] = first_segment;
@@ -52,7 +52,9 @@ void Scheduler2::scheduling(Manager *manager) {
         auto segment = it->second;
         for (int i = 0; i < 131072; ++i) {
           off64_t blockAddr = segment->GetBlockAddr(i);
-          if (blockAddr == ~0ull) continue;
+          // TODO
+          // 如果blockAddr为空或者该segment的i block被置为无效，则跳过
+          if (blockAddr == ~0ull || blockAddr == UINT32_MAX) continue;
           auto it = block_segment_map.find(blockAddr);
           if (it == block_segment_map.end() || it->second.first <= segment->GetSegmentId()) {
             block_segment_map[blockAddr] = std::make_pair(segment->GetSegmentId(), i);
@@ -123,6 +125,14 @@ void Scheduler2::collect(Manager *manager, std::map<uint64_t, std::pair<uint64_t
     auto segment = segments[segmentId];
     off64_t oldPhyAddr = segment->GetPhyAddr(blockIndex);
     char* data = segment->GetBlockData(blockIndex);
+    /*
+    auto tmp_blockAddr = segment->GetBlockAddr(blockIndex);
+    std::cout << "collect: segmentId->" << segmentId
+              << ", blockIndex->" << blockIndex
+              << ", blockAddr->" << blockAddr
+              << ", oldPhyAddr->" << oldPhyAddr
+              << ", tmp_blockAddr->" << tmp_blockAddr << std::endl;
+    */
     if (!manager->GcAppend(data, blockAddr, oldPhyAddr)) {
       nRewriteBlocks += 1;
     }
@@ -130,6 +140,7 @@ void Scheduler2::collect(Manager *manager, std::map<uint64_t, std::pair<uint64_t
 
   for (auto gc_segment_id : gc_segment_ids) {
     auto segment = segments[gc_segment_id];
+    std::cout << "RemoveSegment: segment->" << segment->GetSegmentId() << std::endl;
     manager->RemoveSegment(segment->GetSegmentId());
   }
 }
