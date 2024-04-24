@@ -202,7 +202,10 @@ uint64_t Manager::PrintRealStats() {
     nInvalidBlocks += pr.second->GetTotalInvalidBlocks();
     nBlocks += pr.second->GetTotalBlocks();
   }
-  std::cout << "Stat: " << nInvalidBlocks << " " << nBlocks - nInvalidBlocks << std::endl;
+  double WA = 1 + (double)mTotalGcWrites/(double)mTotalUserWrites;
+  std::cout << "Stat: nInvalidBlocks:" << nInvalidBlocks << ", ValidBlocks:" << nBlocks - nInvalidBlocks
+            << ", Invalid percent:" << nInvalidBlocks * 100 / nBlocks << "%" 
+            << ", WA:" << WA << std::endl;
   std::cout << "UserWrite: " << mTotalUserWrites * 4096 / 1024 / 1024 / 1024.0 << 
     ", GCWrite: " << mTotalGcWrites * 4096 / 1024 / 1024 / 1024.0 << std::endl;
   return 0;
