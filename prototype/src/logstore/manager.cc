@@ -153,7 +153,7 @@ std::shared_ptr<Segment>& Manager::GetSegmentById(uint64_t id) {
   return mSegments[id];
 }
 
-void Manager::OpenNewSegment(int id) {
+void Manager:: OpenNewSegment(int id) {
   std::lock_guard<std::mutex> lck(mSegmentMutex);
 
   std::shared_ptr<Segment> segment = std::make_shared<Segment>(mCurrentSegmentId, id, globalTimestamp);
@@ -196,7 +196,9 @@ void Manager::CollectSegment(int id) {
 double Manager::GetGp() const {
   return (mTotalBlocks == 0) ? 0 : 1.0 * mTotalInvalidBlocks / mTotalBlocks;
 }
-
+uint32_t Manager::GetSegmentsNum() const {
+  return mSegments.size();
+}
 void Manager::GetSegments(std::vector<Segment> &segs) {
   std::lock_guard<std::mutex> lck(mSegmentMutex);
   segs.reserve(mSegments.size());

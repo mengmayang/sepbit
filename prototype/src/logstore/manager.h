@@ -26,6 +26,7 @@ public:
     void Read(void *buf, off64_t addr);
 
     double GetGp() const;
+    uint32_t GetSegmentsNum() const;
     uint64_t GetnBlocks() const;
     uint64_t GetnValidBlocks() const;
     uint64_t GetnInvalidBlocks() const;

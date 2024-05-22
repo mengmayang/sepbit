@@ -31,8 +31,8 @@ void Scheduler1::scheduling(Manager *manager) {
       Segment segment = manager->ReadSegment(segmentId);
       {
         gettimeofday(&current_time, NULL);
-        printf("GC finish read: %ld.%ld\n",
-            current_time.tv_sec, current_time.tv_usec);
+        printf("GC finish read: %ld.%ld, GP: %.2f, SegmentsNum: %ld\n",
+            current_time.tv_sec, current_time.tv_usec, segment.GetGp(), manager->GetSegmentsNum());
       }
       // collect the segment
       collect(manager, segment);
